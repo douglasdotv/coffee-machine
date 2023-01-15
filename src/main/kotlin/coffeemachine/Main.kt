@@ -1,51 +1,99 @@
 package coffeemachine
 
+// arrayOf(water, milk, coffeeBeans)
+var availableResources = arrayOf(400, 540, 120)
+var money = 550
+var disposableCups = 9
+
+// arrayOf(neededWater, neededMilk, neededCoffeeBeans, cost)
+val coffeeTypeToCoffeeTypeInfo = mapOf(
+    1 to arrayOf(250, 0, 16, 4),
+    2 to arrayOf(350, 75, 20, 7),
+    3 to arrayOf(200, 100, 12, 6)
+)
+
 fun main() {
-    val ingredients = getIngredients()
-    val neededCupsOfCoffee = getNeededCoffee()
-    val maxCupsOfCoffee = calculateMaxCupsOfCoffee(ingredients)
-    runCoffeeMachine(neededCupsOfCoffee, maxCupsOfCoffee)
-}
+    displayInfo(availableResources, money, disposableCups)
 
-private fun getIngredients(): Array<Int> {
-    val ingredientNames = arrayOf("water", "milk", "coffee")
-    val ingredients = Array(3) { 0 }
+    when (getAction()) {
+        "buy" -> {
+            buyCoffee()
+        }
 
-    for (i in ingredientNames.indices) {
-        println("Write how many ml of ${ingredientNames[i]} the coffee machine has: ")
-        ingredients[i] = readln().toInt()
+        "fill" -> {
+            fillMachine()
+        }
+
+        "take" -> {
+            takeMoney()
+        }
     }
 
-    return ingredients
+    displayInfo(availableResources, money, disposableCups)
 }
 
-private fun getNeededCoffee(): Int {
-    println("Write how many cups of coffee you will need: ")
-    return readln().toInt()
-}
-
-fun calculateMaxCupsOfCoffee(ingredients: Array<Int>): Int {
-    val requiredIngredients = arrayOf(200, 50, 15)
-
-    if (ingredients[0] < requiredIngredients[0]
-        || ingredients[1] < requiredIngredients[1]
-        || ingredients[2] < requiredIngredients[2]
-    ) {
-        return 0
-    }
-
-    return minOf(
-        ingredients[0] / requiredIngredients[0],
-        ingredients[1] / requiredIngredients[1],
-        ingredients[2] / requiredIngredients[2]
+private fun displayInfo(resources: Array<Int>, money: Int, disposableCups: Int) {
+    println(
+        """
+        The coffee machine has:
+        ${resources[0]} ml of water
+        ${resources[1]} ml of milk
+        ${resources[2]} g of coffee beans
+        $disposableCups disposable cups
+        ${'$'}$money of money
+    """.trimIndent() + "\n"
     )
 }
 
-private fun runCoffeeMachine(needed: Int, max: Int) {
-    val diff = max - needed
-    when {
-        diff < 0 -> println("No, I can make only $max cups of coffee")
-        diff > 0 -> println("Yes, I can make that amount of coffee (and even $diff more than that)")
-        else -> println("Yes, I can make that amount of coffee")
+private fun getAction(): String {
+    println("Write action (buy, fill, take): ")
+    return readln()
+}
+
+private fun buyCoffee() {
+    val coffeeType = getCoffeeType()
+    val coffeeTypeInfo = coffeeTypeToCoffeeTypeInfo.getValue(coffeeType)
+
+    if (disposableCups == 0) {
+        return
     }
+
+    for (i in 0..2) {
+        if (availableResources[i] < coffeeTypeInfo[i]) {
+            return
+        }
+    }
+
+    for (i in 0..2) {
+        availableResources[i] -= coffeeTypeInfo[i]
+    }
+
+    disposableCups--
+
+    money += coffeeTypeInfo[3]
+
+    print("\n")
+}
+
+private fun fillMachine() {
+    println("Write how many ml of water you want to add: ")
+    availableResources[0] += readln().toInt()
+    println("Write how many ml of milk you want to add: ")
+    availableResources[1] += readln().toInt()
+    println("Write how many grams of coffee beans you want to add: ")
+    availableResources[2] += readln().toInt()
+    println("Write how many disposable cups you want to add: ")
+    disposableCups += readln().toInt()
+    print("\n")
+}
+
+private fun takeMoney() {
+    println("I gave you ${'$'}$money")
+    money = 0
+    print("\n")
+}
+
+private fun getCoffeeType(): Int {
+    println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino")
+    return readln().toInt()
 }
